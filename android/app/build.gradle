@@ -1,0 +1,70 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+// Potpisni ključ: GitHub Actions ga dekodira iz secret-a KEYSTORE_BASE64 u app/sabur.jks
+def ksFile = file('sabur.jks')
+def ksPass = System.getenv('KS_PASS') ?: 'android-temp'
+def runNo  = (System.getenv('GITHUB_RUN_NUMBER') ?: '0').toInteger()
+def repo   = System.getenv('GITHUB_REPOSITORY') ?: 'zvrkavac/sabur-clanstvo'
+
+android {
+    namespace 'dk.sabur.clanstvo'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'dk.sabur.clanstvo'
+        minSdk 24
+        targetSdk 34
+        versionCode 100 + runNo          // 100+ da nadogradi i ranije instaliranu verziju
+        versionName "2.0.${runNo}"
+        buildConfigField 'String', 'BASE_URL', '"https://dzemat.sabur.dk/clanstvo/"'
+        buildConfigField 'String', 'UPDATE_URL', "\"https://github.com/${repo}/releases/latest/download/version.json\""
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    signingConfigs {
+        sabur {
+            storeFile ksFile
+            storePassword ksPass
+            keyAlias 'sabur'
+            keyPassword ksPass
+        }
+    }
+
+    buildTypes {
+        debug {
+            if (ksFile.exists()) signingConfig signingConfigs.sabur
+        }
+        release {
+            minifyEnabled false
+            if (ksFile.exists()) signingConfig signingConfigs.sabur
+        }
+    }
+
+    lint {
+        checkReleaseBuilds false
+        abortOnError false
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+}
+
+dependencies {
+    implementation 'androidx.core:core-ktx:1.13.1'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'androidx.activity:activity-ktx:1.9.2'
+    implementation 'androidx.core:core-splashscreen:1.0.1'
+    implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
+    implementation 'androidx.work:work-runtime-ktx:2.9.1'
+}
