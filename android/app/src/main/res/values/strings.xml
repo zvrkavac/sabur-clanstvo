@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Sabur Članstvo</string>
+    <string name="offline_title">Nema internet veze</string>
+    <string name="offline_text">Provjerite Wi-Fi ili mobilne podatke i pokušajte ponovo.</string>
+    <string name="retry">Pokušaj ponovo</string>
+    <string name="channel_name">Članarina i obavijesti</string>
+    <string name="channel_desc">Podsjetnici za članarinu i obavijesti Džemata Sabur</string>
+    <string name="update_title">Nova verzija aplikacije</string>
+    <string name="update_text">Dostupna je verzija %1$s. Želite li je instalirati sada?</string>
+    <string name="update_yes">Instaliraj</string>
+    <string name="update_no">Kasnije</string>
+    <string name="update_downloading">Preuzimam nadogradnju…</string>
+    <string name="update_failed">Nadogradnja nije preuzeta. Pokušajte kasnije.</string>
+    <string name="update_none">Imate najnoviju verziju.</string>
+    <string name="install_permission">Dozvolite instalaciju nadogradnje za Sabur, pa ponovo dodirnite Instaliraj.</string>
+    <string name="download_started">Preuzimanje je počelo — pogledajte obavijesti.</string>
+    <string name="no_app">Nema aplikacije koja može otvoriti ovaj link.</string>
+</resources>
