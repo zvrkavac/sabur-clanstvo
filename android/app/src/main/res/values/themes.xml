@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Sabur" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="colorPrimary">@color/teal</item>
+        <item name="colorPrimaryDark">@color/teal_dark</item>
+        <item name="colorAccent">@color/gold</item>
+        <item name="android:statusBarColor">@color/teal</item>
+        <item name="android:navigationBarColor">@color/teal</item>
+        <item name="android:windowBackground">@color/bg</item>
+    </style>
+    <!-- Početni ekran (Android 12+ SplashScreen API, radi i na starijim) -->
+    <style name="Theme.Sabur.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/teal</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon</item>
+        <item name="postSplashScreenTheme">@style/Theme.Sabur</item>
+    </style>
+</resources>
