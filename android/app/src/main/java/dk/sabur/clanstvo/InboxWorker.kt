@@ -16,7 +16,8 @@ import java.util.concurrent.TimeUnit
 
 /**
  * Pozadinska provjera novih obavijesti (podsjetnik za članarinu) — bez Firebase-a.
- * Pokreće se svaka 3 sata (kad ima interneta), pri otvaranju aplikacije i odmah nakon "Probna obavijest".
+ * U pozadini svakih 15 minuta (najčešće što Android dozvoljava), dok je aplikacija otvorena svakih 60 s,
+ * i odmah nakon "Probna obavijest".
  */
 class InboxWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx, params) {
 
@@ -43,12 +44,12 @@ class InboxWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx,
         private val net = Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
 
         fun schedule(c: Context) {
-            val req = PeriodicWorkRequestBuilder<InboxWorker>(3, TimeUnit.HOURS).setConstraints(net).build()
-            WorkManager.getInstance(c).enqueueUniquePeriodicWork("sabur-inbox", ExistingPeriodicWorkPolicy.KEEP, req)
+            val req = PeriodicWorkRequestBuilder<InboxWorker>(15, TimeUnit.MINUTES).setConstraints(net).build()
+            WorkManager.getInstance(c).enqueueUniquePeriodicWork("sabur-inbox", ExistingPeriodicWorkPolicy.UPDATE, req)
         }
 
         fun runNow(c: Context) {
-            val req = OneTimeWorkRequestBuilder<InboxWorker>().setConstraints(net).setInitialDelay(3, TimeUnit.SECONDS).build()
+            val req = OneTimeWorkRequestBuilder<InboxWorker>().setConstraints(net).setInitialDelay(1, TimeUnit.SECONDS).build()
             WorkManager.getInstance(c).enqueueUniqueWork("sabur-inbox-now", ExistingWorkPolicy.REPLACE, req)
         }
     }
