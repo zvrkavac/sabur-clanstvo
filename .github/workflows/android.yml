@@ -64,6 +64,22 @@ jobs:
           python3 -m pip install --quiet pillow
           python3 android/tools/make_icons.py
 
+      - name: Firebase (google-services.json iz Secrets, ako postoji)
+        env:
+          GSJ: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          if [ -n "$GSJ" ]; then
+            printf '%s' "$GSJ" > android/app/google-services.json
+            if python3 -c "import json,sys; d=json.load(open('android/app/google-services.json')); assert any(c['client_info']['android_client_info']['package_name']=='dk.sabur.clanstvo' for c in d['client'])"; then
+              echo "Firebase: uključen"
+            else
+              echo "::warning::GOOGLE_SERVICES_JSON nije ispravan ili nije za paket dk.sabur.clanstvo — gradim bez Firebase-a."
+              rm -f android/app/google-services.json
+            fi
+          else
+            echo "Firebase: secret GOOGLE_SERVICES_JSON nije postavljen — aplikacija radi s provjerom svakih 15 min."
+          fi
+
       - name: Build APK
         if: steps.ks.outputs.ok == 'true'
         run: gradle -p android assembleRelease --no-daemon --stacktrace
