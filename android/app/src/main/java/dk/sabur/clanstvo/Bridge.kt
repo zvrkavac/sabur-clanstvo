@@ -20,6 +20,7 @@ class Bridge(private val act: MainActivity) {
     /** Server je izdao token za ovog člana → od sada se u pozadini preuzimaju njegove obavijesti */
     @JavascriptInterface fun setToken(token: String, memberId: String, lastId: String) {
         Prefs.save(act, token, memberId, lastId.toLongOrNull() ?: 0L)
+        Fcm.sync(act)
         InboxWorker.runNow(act)
     }
 
