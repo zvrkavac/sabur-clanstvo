@@ -39,6 +39,7 @@ object Notifier {
             .setStyle(NotificationCompat.BigTextStyle().bigText(m.body))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
+            .setOnlyAlertOnce(true)
             .setContentIntent(pi)
             .build()
         try { NotificationManagerCompat.from(c).notify(m.id.toInt(), n) } catch (e: SecurityException) { }
