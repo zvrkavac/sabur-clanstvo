@@ -50,6 +50,15 @@ class MainActivity : AppCompatActivity() {
     private var keepSplash = true
     private var lastErrorUrl: String? = null
 
+    // Dok je aplikacija otvorena: provjera novih obavijesti svakih 60 s (u pozadini radi WorkManager)
+    private val poll = Handler(Looper.getMainLooper())
+    private val pollTask = object : Runnable {
+        override fun run() {
+            InboxWorker.runNow(this@MainActivity)
+            poll.postDelayed(this, 60_000L)
+        }
+    }
+
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         val splash = installSplashScreen()
@@ -150,7 +159,6 @@ class MainActivity : AppCompatActivity() {
         Notifier.createChannel(this)
         askNotificationPermission()
         InboxWorker.schedule(this)
-        InboxWorker.runNow(this)
         Updater.check(this, silent = true)
     }
 
@@ -163,9 +171,12 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         web.onResume()
+        poll.removeCallbacks(pollTask)
+        poll.postDelayed(pollTask, 1500L)
     }
 
     override fun onPause() {
+        poll.removeCallbacks(pollTask)
         web.onPause()
         CookieManager.getInstance().flush()
         super.onPause()
