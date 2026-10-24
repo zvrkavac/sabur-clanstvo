@@ -3,6 +3,12 @@ plugins {
     id 'org.jetbrains.kotlin.android'
 }
 
+// Firebase (trenutne obavijesti i kad je aplikacija ugašena): GitHub Actions upisuje
+// google-services.json iz secret-a GOOGLE_SERVICES_JSON. Bez njega aplikacija radi kao prije (provjera svakih 15 min).
+if (file('google-services.json').exists()) {
+    apply plugin: 'com.google.gms.google-services'
+}
+
 // Potpisni ključ: GitHub Actions ga dekodira iz secret-a KEYSTORE_BASE64 u app/sabur.jks
 def ksFile = file('sabur.jks')
 def ksPass = System.getenv('KS_PASS') ?: 'android-temp'
@@ -67,4 +73,6 @@ dependencies {
     implementation 'androidx.core:core-splashscreen:1.0.1'
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
     implementation 'androidx.work:work-runtime-ktx:2.9.1'
+    implementation platform('com.google.firebase:firebase-bom:33.5.1')
+    implementation 'com.google.firebase:firebase-messaging'
 }
