@@ -159,6 +159,7 @@ class MainActivity : AppCompatActivity() {
         Notifier.createChannel(this)
         askNotificationPermission()
         InboxWorker.schedule(this)
+        Fcm.sync(this)
         Updater.check(this, silent = true)
     }
 
