@@ -36,6 +36,18 @@ object Api {
         } finally { c.disconnect() }
     }
 
+    /** FCM token uređaja → server (za trenutne obavijesti) */
+    fun setFcm(token: String, fcm: String) {
+        try {
+            val c = open(BuildConfig.BASE_URL + "app_api.php?act=fcm&token=$token", token, "POST")
+            c.doOutput = true
+            c.setRequestProperty("Content-Type", "application/x-www-form-urlencoded")
+            c.outputStream.use { it.write(("fcm=" + java.net.URLEncoder.encode(fcm, "UTF-8")).toByteArray()) }
+            c.responseCode
+            c.disconnect()
+        } catch (e: Exception) { }
+    }
+
     fun unregister(token: String) {
         try {
             val c = open(BuildConfig.BASE_URL + "app_api.php?act=unregister&token=$token", token, "POST")
