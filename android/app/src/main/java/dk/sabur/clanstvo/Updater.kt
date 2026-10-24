@@ -20,7 +20,7 @@ object Updater {
 
     fun check(act: MainActivity, silent: Boolean) {
         val now = System.currentTimeMillis()
-        if (silent && now - Prefs.lastUpdateCheck(act) < 12 * 3600_000L) return   // najviše 2× dnevno
+        if (silent && now - Prefs.lastUpdateCheck(act) < 3600_000L) return   // najviše jednom na sat
         Prefs.setLastUpdateCheck(act, now)
         Thread {
             try {
