@@ -1,0 +1,112 @@
+# Sabur Članstvo — gradi APK i objavljuje GitHub Release (aplikacija se sama nadograđuje iz njega)
+# Isti princip kao "Moje Kamere": promijenite kod → push → ostalo je automatski.
+# Secrets (Settings → Secrets and variables → Actions):
+#   KEYSTORE_BASE64   — sadržaj sabur.jks.base64.txt
+#   KEYSTORE_PASSWORD — lozinka ključa
+name: Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'android/**'
+      - '.github/workflows/android.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      # Android SDK je već na ubuntu-latest ($ANDROID_HOME, licence prihvaćene) — bez setup-android koraka
+      - name: Gradle 8.9
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Potpisni ključ
+        id: ks
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::warning::Nedostaju secrets KEYSTORE_BASE64 i KEYSTORE_PASSWORD (Settings → Secrets and variables → Actions). Build je preskočen."
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "$KEYSTORE_BASE64" | base64 -d > android/app/sabur.jks
+          echo "ok=true" >> "$GITHUB_OUTPUT"
+
+      - name: Ikone (iz loga na sajtu)
+        if: steps.ks.outputs.ok == 'true'
+        run: |
+          python3 -m pip install --quiet pillow
+          python3 android/tools/make_icons.py
+
+      - name: Build APK
+        if: steps.ks.outputs.ok == 'true'
+        env:
+          KS_PASS: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: gradle -p android assembleRelease --no-daemon --stacktrace
+
+      - name: Pripremi release
+        if: steps.ks.outputs.ok == 'true'
+        id: rel
+        env:
+          KS_PASS: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: |
+          VC=$((100 + ${{ github.run_number }}))
+          VN="2.0.${{ github.run_number }}"
+          TAG="v${VN}"
+          mkdir -p out
+          cp android/app/build/outputs/apk/release/app-release.apk out/sabur-clanstvo.apk
+          NOTES=$(git log -1 --pretty=%s | head -c 300)
+          python3 - "$VC" "$VN" "$TAG" "$NOTES" <<'PY'
+          import json, sys
+          vc, vn, tag, notes = sys.argv[1:5]
+          repo = "${{ github.repository }}"
+          json.dump({"versionCode": int(vc), "versionName": vn, "notes": notes,
+                     "apk": f"https://github.com/{repo}/releases/download/{tag}/sabur-clanstvo.apk"},
+                    open("out/version.json", "w"), ensure_ascii=False, indent=2)
+          PY
+          FP=$(keytool -list -v -keystore android/app/sabur.jks -storepass "$KS_PASS" -alias sabur | grep -m1 'SHA256:' | sed 's/.*SHA256: //')
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "name=Sabur Članstvo $VN" >> "$GITHUB_OUTPUT"
+          {
+            echo "## ✅ Sabur Članstvo $VN"
+            echo "- APK: https://github.com/${{ github.repository }}/releases/latest/download/sabur-clanstvo.apk"
+            echo "- versionCode: $VC"
+            echo "- SHA-256 ključa: \`$FP\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+          cat out/version.json
+
+      - name: Objavi GitHub Release
+        if: steps.ks.outputs.ok == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.rel.outputs.tag }}
+          name: ${{ steps.rel.outputs.name }}
+          make_latest: true
+          files: |
+            out/sabur-clanstvo.apk
+            out/version.json
+
+      - name: Upload artifact
+        if: steps.ks.outputs.ok == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: sabur-clanstvo-apk
+          path: out/
+          retention-days: 30
