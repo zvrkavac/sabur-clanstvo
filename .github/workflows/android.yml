@@ -40,13 +40,22 @@ jobs:
         id: ks
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          RAW_PASS: ${{ secrets.KEYSTORE_PASSWORD }}
         run: |
           if [ -z "$KEYSTORE_BASE64" ]; then
             echo "::warning::Nedostaju secrets KEYSTORE_BASE64 i KEYSTORE_PASSWORD (Settings → Secrets and variables → Actions). Build je preskočen."
             echo "ok=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          echo "$KEYSTORE_BASE64" | base64 -d > android/app/sabur.jks
+          # ukloni razmake, novi red i nevidljive znakove koji se zalijepe uz kopiranje
+          echo "$KEYSTORE_BASE64" | tr -cd 'A-Za-z0-9+/=' | base64 -d > android/app/sabur.jks
+          P=$(printf '%s' "$RAW_PASS" | tr -cd 'A-Za-z0-9')
+          echo "::add-mask::$P"
+          if ! keytool -list -keystore android/app/sabur.jks -storepass "$P" -alias sabur > /dev/null 2>&1; then
+            echo "::error::KEYSTORE_PASSWORD ili KEYSTORE_BASE64 nije ispravan. Ponovo kopirajte sadržaj keystore_password.txt (samo jedan red) i sabur.jks.base64.txt u Secrets."
+            exit 1
+          fi
+          echo "KS_PASS=$P" >> "$GITHUB_ENV"
           echo "ok=true" >> "$GITHUB_OUTPUT"
 
       - name: Ikone (iz loga na sajtu)
@@ -57,15 +66,11 @@ jobs:
 
       - name: Build APK
         if: steps.ks.outputs.ok == 'true'
-        env:
-          KS_PASS: ${{ secrets.KEYSTORE_PASSWORD }}
         run: gradle -p android assembleRelease --no-daemon --stacktrace
 
       - name: Pripremi release
         if: steps.ks.outputs.ok == 'true'
         id: rel
-        env:
-          KS_PASS: ${{ secrets.KEYSTORE_PASSWORD }}
         run: |
           VC=$((100 + ${{ github.run_number }}))
           VN="2.0.${{ github.run_number }}"
