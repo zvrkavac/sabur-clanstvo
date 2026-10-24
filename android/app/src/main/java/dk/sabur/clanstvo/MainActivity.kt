@@ -160,7 +160,6 @@ class MainActivity : AppCompatActivity() {
         askNotificationPermission()
         InboxWorker.schedule(this)
         Fcm.sync(this)
-        Updater.check(this, silent = true)
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -174,6 +173,7 @@ class MainActivity : AppCompatActivity() {
         web.onResume()
         poll.removeCallbacks(pollTask)
         poll.postDelayed(pollTask, 1500L)
+        Updater.check(this, silent = true)     // nova verzija? (najviše jednom na sat)
     }
 
     override fun onPause() {
